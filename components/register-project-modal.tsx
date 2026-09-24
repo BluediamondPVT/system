@@ -269,7 +269,7 @@ export function RegisterProjectModal({
               <div className="relative">
                 <Tag className="absolute left-3 top-2.5 w-4 h-4 text-white/40 pointer-events-none" />
                 <select
-                  value={formData.tag}
+                  value={formData.tag} 
                   onChange={(e) =>
                     setFormData({
                       ...formData,
