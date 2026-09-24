@@ -23,7 +23,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Ashapura Builders Executive Master Dashboard */}
-      <ExecutiveDashboardView />
+      <ExecutiveDashboardView userRole={user.role} />
 
       {/* Role & Identity Governance for Super Admin */}
       {user.role === 'SUPER_ADMIN' && (
@@ -36,7 +36,7 @@ export default async function DashboardPage() {
               Super Admin Controls
             </span>
           </div>
-          <SuperAdminView initialUsers={initialUsers} />
+          <SuperAdminView initialUsers={initialUsers} currentUserId={user.userId} />
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useProject } from '@/lib/project-context';
 import { LeadProspect } from '@/lib/ashapura-data';
 import {
@@ -10,11 +11,42 @@ import {
   Building2,
   X,
   Filter,
+  ShieldAlert,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function LeadCRMPage() {
-  const { projects, leads, addLead, updateLeadStage } = useProject();
+  const { projects, leads, addLead, updateLeadStage, userRole } = useProject();
+
+  if (userRole === 'ACCOUNT') {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center p-6">
+        <div className="max-w-md w-full glass-card p-8 rounded-3xl border border-purple-500/20 text-center space-y-4 shadow-2xl bg-black/40 backdrop-blur-2xl">
+          <div className="w-14 h-14 rounded-2xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center mx-auto text-purple-400">
+            <ShieldAlert className="w-7 h-7" />
+          </div>
+          <h2 className="text-xl font-bold text-white tracking-tight">Access Restricted</h2>
+          <p className="text-xs text-white/60 leading-relaxed">
+            The Lead CRM &amp; Sales Pipeline module is reserved for Sales &amp; Operations teams. Accounts and finance desk officers do not manage customer inquiries.
+          </p>
+          <div className="pt-2 flex justify-center gap-3">
+            <Link
+              href="/dashboard"
+              className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/dashboard/accounts"
+              className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition"
+            >
+              Go to Accounts &amp; Demands
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const [selectedStage, setSelectedStage] = useState<string>('ALL');
   const [selectedSiteFilter, setSelectedSiteFilter] = useState<string>('ALL');

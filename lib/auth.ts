@@ -49,16 +49,20 @@ export async function verifyToken(token: string): Promise<JWTPayloadData | null>
 /**
  * Maps a user role to their dedicated dashboard route.
  */
+/**
+ * Maps each user role to their dedicated primary workspace route:
+ * - ACCOUNT -> /dashboard/accounts (MahaRERA Demands & Society Ledger)
+ * - SALES   -> /dashboard/leads (Lead CRM & Pipeline)
+ * - SUPER_ADMIN / ADMIN -> /dashboard (Master Executive Console)
+ */
 export function getDashboardRouteForRole(role?: string): string {
   switch (role) {
-    case 'SUPER_ADMIN':
-      return '/dashboard/super-admin';
-    case 'ADMIN':
-      return '/dashboard/admin';
-    case 'SALES':
-      return '/dashboard/sales';
     case 'ACCOUNT':
-      return '/dashboard/account';
+      return '/dashboard/accounts';
+    case 'SALES':
+      return '/dashboard/leads';
+    case 'SUPER_ADMIN':
+    case 'ADMIN':
     default:
       return '/dashboard';
   }
@@ -66,25 +70,29 @@ export function getDashboardRouteForRole(role?: string): string {
 
 /**
  * Checks whether a given role has authorization to access a specific route pathname.
- * SUPER_ADMIN has access to all dashboards.
- * Other roles are restricted strictly to their assigned module dashboards.
+ * SUPER_ADMIN has access to all dashboards and identity governance.
+ * ADMIN has access to inventory, CRM, and accounts.
+ * SALES has access to inventory and CRM (blocked from Accounts and Users).
+ * ACCOUNT has access to inventory (read-only) and accounts (blocked from CRM and Users).
  */
 export function isAuthorizedForPath(role: string, pathname: string): boolean {
   if (role === 'SUPER_ADMIN') {
     return true;
   }
 
-  if (pathname.startsWith('/dashboard/super-admin')) {
+  // Users & Identity Governance is strictly SUPER_ADMIN only
+  if (pathname.startsWith('/dashboard/users')) {
     return role === 'SUPER_ADMIN';
   }
-  if (pathname.startsWith('/dashboard/admin')) {
-    return role === 'ADMIN';
+
+  // Accounts & MahaRERA Demands: SUPER_ADMIN, ADMIN, and ACCOUNT only (SALES is blocked)
+  if (pathname.startsWith('/dashboard/accounts')) {
+    return role === 'SUPER_ADMIN' || role === 'ADMIN' || role === 'ACCOUNT';
   }
-  if (pathname.startsWith('/dashboard/sales')) {
-    return role === 'SALES';
-  }
-  if (pathname.startsWith('/dashboard/account')) {
-    return role === 'ACCOUNT';
+
+  // Lead CRM & Sourcing Pipeline: SUPER_ADMIN, ADMIN, and SALES only (ACCOUNT is blocked)
+  if (pathname.startsWith('/dashboard/leads')) {
+    return role === 'SUPER_ADMIN' || role === 'ADMIN' || role === 'SALES';
   }
 
   return true;

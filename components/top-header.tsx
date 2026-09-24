@@ -11,13 +11,15 @@ import {
   X,
   UserCheck,
   Check,
+  Plus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { RegisterProjectModal } from '@/components/register-project-modal';
 
 interface TopHeaderProps {
   userEmail?: string;
-  role?: string;
+  role?: 'SUPER_ADMIN' | 'ADMIN' | 'SALES' | 'ACCOUNT' | string;
 }
 
 export function TopHeader({ userEmail, role = 'SUPER_ADMIN' }: TopHeaderProps) {
@@ -34,6 +36,7 @@ export function TopHeader({ userEmail, role = 'SUPER_ADMIN' }: TopHeaderProps) {
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [registerModalOpen, setRegisterModalOpen] = useState(false);
 
   const projectMenuRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -88,7 +91,7 @@ export function TopHeader({ userEmail, role = 'SUPER_ADMIN' }: TopHeaderProps) {
     matchedProjects.length > 0 || matchedUnits.length > 0 || matchedLeads.length > 0;
 
   return (
-    <header className="w-full flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 px-3 py-2.5 sm:px-5 sm:py-3 rounded-2xl glass-card border border-white/10 backdrop-blur-xl select-none z-30 transition-all">
+    <header className="relative z-40 w-full flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 px-3 py-2.5 sm:px-5 sm:py-3 rounded-2xl glass-card border border-white/10 backdrop-blur-xl select-none transition-all">
       {/* Left: Active Project Selector Dropdown */}
       <div className="relative" ref={projectMenuRef}>
         <button
@@ -123,13 +126,13 @@ export function TopHeader({ userEmail, role = 'SUPER_ADMIN' }: TopHeaderProps) {
 
         {/* Project Selector Modal/Dropdown */}
         {projectMenuOpen && (
-          <div className="absolute left-0 top-full mt-2 w-80 sm:w-96 rounded-2xl glass-card border border-white/15 shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+          <div className="absolute left-0 top-full mt-2 w-80 sm:w-96 rounded-2xl bg-[#121622]/95 backdrop-blur-3xl border border-white/20 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
             <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between">
               <span className="text-xs font-bold text-white/80 uppercase tracking-wider">
                 Select Active Site / Tie-Up
               </span>
               <span className="text-[10px] text-blue-400 bg-blue-500/15 px-2 py-0.5 rounded-full border border-blue-500/30">
-                10 Projects
+                {projects.length} Projects
               </span>
             </div>
             <div className="max-h-80 overflow-y-auto custom-glass-scroll py-1 space-y-1">
@@ -182,6 +185,22 @@ export function TopHeader({ userEmail, role = 'SUPER_ADMIN' }: TopHeaderProps) {
                 );
               })}
             </div>
+
+            {role === 'SUPER_ADMIN' && (
+              <div className="pt-2 mt-1 border-t border-white/10 px-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProjectMenuOpen(false);
+                    setRegisterModalOpen(true);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 p-2 rounded-xl bg-gradient-to-r from-[#ff6536]/20 to-[#ff8555]/20 hover:from-[#ff6536]/30 hover:to-[#ff8555]/30 border border-[#ff6536]/30 text-white text-xs font-bold transition group cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5 text-[#ff6536] transition-transform group-hover:rotate-90 duration-300" />
+                  <span>Register New Project</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -211,7 +230,7 @@ export function TopHeader({ userEmail, role = 'SUPER_ADMIN' }: TopHeaderProps) {
 
         {/* Instant Search Results Dropdown */}
         {searchFocused && query.length > 0 && (
-          <div className="absolute left-0 right-0 top-full mt-2 rounded-2xl glass-card border border-white/15 shadow-2xl p-3 z-50 animate-in fade-in duration-150 max-h-96 overflow-y-auto custom-glass-scroll">
+          <div className="absolute left-0 right-0 top-full mt-2 rounded-2xl bg-[#121622]/95 backdrop-blur-3xl border border-white/20 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] p-3 z-50 animate-in fade-in duration-150 max-h-96 overflow-y-auto custom-glass-scroll">
             {!hasResults ? (
               <p className="text-xs text-center text-white/40 py-4">
                 No matching units, leads, or projects found for &quot;{searchQuery}&quot;
@@ -330,7 +349,7 @@ export function TopHeader({ userEmail, role = 'SUPER_ADMIN' }: TopHeaderProps) {
           </button>
 
           {notificationsOpen && (
-            <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 rounded-2xl glass-card border border-white/15 shadow-2xl p-3 z-50 animate-in fade-in duration-150">
+            <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 rounded-2xl bg-[#121622]/95 backdrop-blur-3xl border border-white/20 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] p-3 z-50 animate-in fade-in duration-150">
               <div className="flex items-center justify-between pb-2 border-b border-white/10">
                 <span className="text-xs font-bold text-white uppercase tracking-wider">
                   Live Notifications
@@ -363,20 +382,66 @@ export function TopHeader({ userEmail, role = 'SUPER_ADMIN' }: TopHeaderProps) {
           )}
         </div>
 
-        {/* User Profile Pill */}
-        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-white/[0.05] border border-white/10">
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-600/30 border border-blue-400/50 flex items-center justify-center font-bold text-xs text-blue-300">
-            {role === 'SUPER_ADMIN' ? 'AB' : 'US'}
-          </div>
-          <div className="flex flex-col text-left leading-tight hidden sm:flex">
-            <span className="text-xs font-bold text-white flex items-center gap-1">
-              {role === 'SUPER_ADMIN' ? 'Super Admin' : userEmail?.split('@')[0] || 'Executive'}
-              <UserCheck className="w-3 h-3 text-emerald-400" />
-            </span>
-            <span className="text-[10px] text-white/50">Malad HO • {role}</span>
-          </div>
-        </div>
+        {/* User Profile Pill with dynamic role styling */}
+        {(() => {
+          const roleConfig: Record<string, { label: string; badge: string; initials: string; gradient: string; dotColor: string }> = {
+            SUPER_ADMIN: {
+              label: 'Super Admin (MD)',
+              badge: 'Malad HO • MD Desk',
+              initials: 'AB',
+              gradient: 'from-[#ff6536] to-amber-500',
+              dotColor: 'bg-emerald-400',
+            },
+            ADMIN: {
+              label: 'Project Admin',
+              badge: 'Malad HO • Site Ops',
+              initials: 'PA',
+              gradient: 'from-blue-600 to-indigo-600',
+              dotColor: 'bg-blue-400',
+            },
+            SALES: {
+              label: 'Sales Executive',
+              badge: 'Sales Desk • Closer',
+              initials: 'SE',
+              gradient: 'from-emerald-600 to-teal-600',
+              dotColor: 'bg-emerald-400',
+            },
+            ACCOUNT: {
+              label: 'Accounts & Finance',
+              badge: 'Billing Desk • Escrow',
+              initials: 'AF',
+              gradient: 'from-purple-600 to-violet-600',
+              dotColor: 'bg-purple-400',
+            },
+          };
+          const cfg = roleConfig[role] || roleConfig.SALES;
+
+          return (
+            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-white/[0.05] border border-white/10 shadow-sm">
+              <div
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br ${cfg.gradient} border border-white/20 flex items-center justify-center font-bold text-xs text-white shadow-md shrink-0`}
+              >
+                {cfg.initials}
+              </div>
+              <div className="flex flex-col text-left leading-tight hidden sm:flex">
+                <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                  <span>{cfg.label}</span>
+                  <span className={`w-1.5 h-1.5 rounded-full ${cfg.dotColor} animate-pulse`} />
+                </span>
+                <span className="text-[10px] text-white/50">{cfg.badge}</span>
+              </div>
+            </div>
+          );
+        })()}
       </div>
+
+      {role === 'SUPER_ADMIN' && (
+        <RegisterProjectModal
+          isOpen={registerModalOpen}
+          onClose={() => setRegisterModalOpen(false)}
+          userRole="SUPER_ADMIN"
+        />
+      )}
     </header>
   );
 }

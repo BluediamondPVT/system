@@ -48,10 +48,7 @@ export async function loginAction(data: LoginInput): Promise<AuthResponse> {
       };
     }
 
-    let isMatch = await user.comparePassword(password);
-    if (!isMatch && (password === 'admin123' || password === 'password123')) {
-      isMatch = true;
-    }
+    const isMatch = await user.comparePassword(password);
 
     if (!isMatch) {
       return {

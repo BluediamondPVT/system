@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useProject } from '@/lib/project-context';
 import { DemandNotice } from '@/lib/ashapura-data';
 import {
@@ -15,11 +16,42 @@ import {
   X,
   Filter,
   Check,
+  ShieldAlert,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AccountsDemandsPage() {
-  const { projects, demands, addDemand, sendNotice } = useProject();
+  const { projects, demands, addDemand, sendNotice, userRole } = useProject();
+
+  if (userRole === 'SALES') {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center p-6">
+        <div className="max-w-md w-full glass-card p-8 rounded-3xl border border-rose-500/20 text-center space-y-4 shadow-2xl bg-black/40 backdrop-blur-2xl">
+          <div className="w-14 h-14 rounded-2xl bg-rose-500/20 border border-rose-400/30 flex items-center justify-center mx-auto text-rose-400">
+            <ShieldAlert className="w-7 h-7" />
+          </div>
+          <h2 className="text-xl font-bold text-white tracking-tight">Access Restricted</h2>
+          <p className="text-xs text-white/60 leading-relaxed">
+            The Accounts, MahaRERA Demands &amp; Society Ledger module is restricted to Finance &amp; Management officers. Sales executives do not have clearance to view company financial escrows.
+          </p>
+          <div className="pt-2 flex justify-center gap-3">
+            <Link
+              href="/dashboard"
+              className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/dashboard/inventory"
+              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition"
+            >
+              Go to Inventory
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PAID' | 'PENDING' | 'OVERDUE'>('ALL');
   const [projectFilter, setProjectFilter] = useState<string>('ALL');

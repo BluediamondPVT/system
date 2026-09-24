@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -8,10 +8,8 @@ import {
   LayoutDashboard,
   Grid3X3,
   Users,
-  FileText,
   Wallet,
-  BookOpen,
-  ShieldCheck,
+  UserCog,
   LogOut,
   Loader2,
   Sparkles,
@@ -32,60 +30,96 @@ interface NavItem {
   name: string;
   href: string;
   icon: typeof LayoutDashboard;
-  allowedRoles: Array<'SUPER_ADMIN' | 'ADMIN' | 'SALES' | 'ACCOUNT'>;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  {
-    name: 'Dashboard',
-    href: '/dashboard',
-    icon: LayoutDashboard,
-    allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'SALES', 'ACCOUNT'],
-  },
-  {
-    name: 'Inventory Matrix',
-    href: '/dashboard/inventory',
-    icon: Grid3X3,
-    allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'SALES', 'ACCOUNT'],
-  },
-  {
-    name: 'Lead CRM',
-    href: '/dashboard/leads',
-    icon: Users,
-    allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'SALES'],
-  },
-  {
-    name: 'Documents',
-    href: '/dashboard/documents',
-    icon: FileText,
-    allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'SALES', 'ACCOUNT'],
-  },
-  {
-    name: 'Accounts & Demands',
-    href: '/dashboard/accounts',
-    icon: Wallet,
-    allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'ACCOUNT'],
-  },
-  {
-    name: 'Software Guide',
-    href: '/dashboard/guide',
-    icon: BookOpen,
-    allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'SALES', 'ACCOUNT'],
-  },
-  {
-    name: 'Role Governance',
-    href: '/dashboard/super-admin',
-    icon: ShieldCheck,
-    allowedRoles: ['SUPER_ADMIN'],
-  },
-];
+function getNavItemsForRole(role: 'SUPER_ADMIN' | 'ADMIN' | 'SALES' | 'ACCOUNT'): NavItem[] {
+  if (role === 'ACCOUNT') {
+    return [
+      {
+        name: 'Accounts & Demands',
+        href: '/dashboard/accounts',
+        icon: Wallet,
+      },
+      {
+        name: 'Billing Matrix',
+        href: '/dashboard/inventory',
+        icon: Grid3X3,
+      },
+      {
+        name: 'Executive Overview',
+        href: '/dashboard',
+        icon: LayoutDashboard,
+      },
+    ];
+  }
+
+  if (role === 'SALES') {
+    return [
+      {
+        name: 'Lead CRM',
+        href: '/dashboard/leads',
+        icon: Users,
+      },
+      {
+        name: 'Inventory Matrix',
+        href: '/dashboard/inventory',
+        icon: Grid3X3,
+      },
+      {
+        name: 'Sales Overview',
+        href: '/dashboard',
+        icon: LayoutDashboard,
+      },
+    ];
+  }
+
+  // SUPER_ADMIN and ADMIN
+  return [
+    {
+      name: 'Master Dashboard',
+      href: '/dashboard',
+      icon: LayoutDashboard,
+    },
+    {
+      name: 'Inventory Matrix',
+      href: '/dashboard/inventory',
+      icon: Grid3X3,
+    },
+    {
+      name: 'Lead CRM',
+      href: '/dashboard/leads',
+      icon: Users,
+    },
+    {
+      name: 'Accounts & Demands',
+      href: '/dashboard/accounts',
+      icon: Wallet,
+    },
+    ...(role === 'SUPER_ADMIN'
+      ? [
+          {
+            name: 'User & Roles',
+            href: '/dashboard/users',
+            icon: UserCog,
+          },
+        ]
+      : []),
+  ];
+}
+
+const emptySubscribe = () => () => {};
 
 export function GlassDock({ role = 'SALES' }: GlassDockProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
   const { setTheme, resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === 'dark';
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+
+  const navItems = getNavItemsForRole(role);
+
+  // During SSR and initial client mount, assume dark (defaultTheme) to avoid hydration mismatch
+  const isDark = mounted ? resolvedTheme === 'dark' : true;
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -109,7 +143,7 @@ export function GlassDock({ role = 'SALES' }: GlassDockProps) {
       {/* Top Logo / Brand Icon */}
       <div className="flex flex-col items-center gap-5">
         <Link
-          href="/dashboard"
+          href={role === 'ACCOUNT' ? '/dashboard/accounts' : role === 'SALES' ? '/dashboard/leads' : '/dashboard'}
           title="Ashapura Builders ERP"
           className="w-11 h-11 rounded-2xl flex items-center justify-center bg-white/10 border border-white/20 shadow-md group hover:scale-105 transition-all cursor-pointer"
         >
@@ -122,14 +156,9 @@ export function GlassDock({ role = 'SALES' }: GlassDockProps) {
 
       {/* Center Nav Items */}
       <nav className="flex flex-col items-center gap-3.5 my-auto py-2">
-        {NAV_ITEMS.map((item) => {
-          const isAllowed = item.allowedRoles.includes(role);
+        {navItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
-
-          if (!isAllowed) {
-            return null;
-          }
 
           return (
             <Link
@@ -182,7 +211,8 @@ export function GlassDock({ role = 'SALES' }: GlassDockProps) {
         {/* Light / Dark Mode Toggle */}
         <button
           type="button"
-          title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          suppressHydrationWarning
+          title={mounted ? (isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode') : 'Dark Mode'}
           onClick={() => setTheme(isDark ? 'light' : 'dark')}
           className="group relative w-11 h-11 rounded-2xl flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300"
         >
@@ -198,8 +228,11 @@ export function GlassDock({ role = 'SALES' }: GlassDockProps) {
               }`}
             />
           </span>
-          <span className="hidden md:group-hover:block absolute left-16 px-3 py-1 bg-black/90 backdrop-blur-md text-white text-xs font-medium rounded-lg shadow-xl border border-white/15 whitespace-nowrap pointer-events-none z-50">
-            {isDark ? 'Light Mode' : 'Dark Mode'}
+          <span
+            suppressHydrationWarning
+            className="hidden md:group-hover:block absolute left-16 px-3 py-1 bg-black/90 backdrop-blur-md text-white text-xs font-medium rounded-lg shadow-xl border border-white/15 whitespace-nowrap pointer-events-none z-50"
+          >
+            {mounted ? (isDark ? 'Light Mode' : 'Dark Mode') : 'Dark Mode'}
           </span>
         </button>
       </nav>

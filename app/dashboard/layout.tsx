@@ -1,17 +1,28 @@
 import { getSessionUser } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import { GlassShell } from '@/components/glass-shell';
+import { getAllProjectsAction } from '@/app/actions/project';
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getSessionUser();
+  const [session, projectsRes] = await Promise.all([
+    getSessionUser(),
+    getAllProjectsAction(),
+  ]);
 
   if (!session) {
     redirect('/login');
   }
 
-  return <GlassShell session={session}>{children}</GlassShell>;
+  const initialProjects =
+    projectsRes.success && projectsRes.projects ? projectsRes.projects : undefined;
+
+  return (
+    <GlassShell session={session} initialProjects={initialProjects}>
+      {children}
+    </GlassShell>
+  );
 }

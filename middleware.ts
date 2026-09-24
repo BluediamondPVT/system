@@ -35,9 +35,9 @@ export async function middleware(req: NextRequest) {
   // User is authenticated from here on
   const userRoleDashboard = getDashboardRouteForRole(user.role);
 
-  // Case 3: If user accesses root '/', route to the master dashboard
+  // Case 3: If user accesses root '/', route to their dedicated dashboard
   if (pathname === '/') {
-    return NextResponse.redirect(new URL('/dashboard', req.url));
+    return NextResponse.redirect(new URL(userRoleDashboard, req.url));
   }
 
   // Case 4: Enforce role-based access control (RBAC) on module routes

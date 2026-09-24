@@ -27,20 +27,31 @@ interface ProjectContextType {
   sendNotice: (id: string) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  selectedQuotationUnit: InventoryUnit | null;
-  setSelectedQuotationUnit: (unit: InventoryUnit | null) => void;
+  addProject?: (project: AshapuraProject) => void;
+  userRole?: 'SUPER_ADMIN' | 'ADMIN' | 'SALES' | 'ACCOUNT';
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
-export function ProjectProvider({ children }: { children: React.ReactNode }) {
-  const [projects] = useState<AshapuraProject[]>(ASHAPURA_PROJECTS);
+interface ProjectProviderProps {
+  children: React.ReactNode;
+  initialProjects?: AshapuraProject[];
+  userRole?: 'SUPER_ADMIN' | 'ADMIN' | 'SALES' | 'ACCOUNT';
+}
+
+export function ProjectProvider({ children, initialProjects, userRole }: ProjectProviderProps) {
+  const [projects, setProjects] = useState<AshapuraProject[]>(() =>
+    initialProjects && initialProjects.length > 0 ? initialProjects : ASHAPURA_PROJECTS
+  );
   const [activeProjectId, setActiveProjectId] = useState<string>('meghmala-crysta');
   const [inventory, setInventory] = useState<InventoryUnit[]>(() => generateInitialInventory());
   const [leads, setLeads] = useState<LeadProspect[]>(INITIAL_LEADS);
   const [demands, setDemands] = useState<DemandNotice[]>(INITIAL_DEMANDS);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedQuotationUnit, setSelectedQuotationUnit] = useState<InventoryUnit | null>(null);
+
+  const addProject = (newProj: AshapuraProject) => {
+    setProjects((prev) => [...prev, newProj]);
+  };
 
   const activeProject =
     projects.find((p) => p.id === activeProjectId) || projects[1] || projects[0];
@@ -128,8 +139,8 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         sendNotice,
         searchQuery,
         setSearchQuery,
-        selectedQuotationUnit,
-        setSelectedQuotationUnit,
+        addProject,
+        userRole,
       }}
     >
       {children}
